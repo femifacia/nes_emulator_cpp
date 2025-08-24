@@ -5,6 +5,7 @@
 #include "../OLC_6502/OLC_6502.hpp"
 #include <memory>
 #include <string>
+#include <cstring>
 
 class Bus
 {
@@ -26,5 +27,9 @@ public:
     
 
 
+    /// @brief Read data from the bus
+    /// @param addr 
+    /// @param bReadOnly 
+    /// @return 
     uint8_t read(uint16_t addr, bool bReadOnly = false);
 };
