@@ -4,6 +4,12 @@
 OLC_6502::OLC_6502(/* args */)
 {
     _bus = nullptr;
+    _stack_pointer = 0x00;
+    _program_counter = 0x0000;
+    _x = 0x00;
+    _y = 0x00;
+    _accumulator_register = 0x00;
+    _status_register = 0x00;
 }
 
 OLC_6502::~OLC_6502()
