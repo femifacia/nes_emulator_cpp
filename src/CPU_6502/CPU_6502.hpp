@@ -1,9 +1,10 @@
 #pragma once
 #include <cstdint>
 #include <iostream>
+#include <vector>
 class Bus;
 
-class OLC_6502
+class CPU_6502
 {
 private:
     /* data */
@@ -38,10 +39,19 @@ private:
     // function to access status register flag
     void Setflag(FLAGS6502 f, bool v);
     uint8_t GetFlag(FLAGS6502 f);
+    // depending on the adressing mode we might want to read from a particular adress
+    uint16_t _addr_abs;
+    // when there is a JMP (JUMP), ptr jump to a relative address 
+    uint16_t _addr_relative;
+
+    // current opcode we are reading
+    uint8_t _opcode;
+    // number of cycles left
+    uint8_t _cycles;
 
 public:
-    OLC_6502(/* args */);
-    ~OLC_6502();
+    CPU_6502(/* args */);
+    ~CPU_6502();
 
     /// @brief connect to the BUS
     /// @param bus 
@@ -69,7 +79,7 @@ public:
     uint8_t IZX();
     uint8_t IZY();
     uint8_t REL();
-    uint8_t ZPO();
+    uint8_t ZP0();
     uint8_t ZPX();
     uint8_t ZPY();
 
@@ -131,7 +141,28 @@ public:
     uint8_t TXS();
     uint8_t TYA();
 
-    uint8_t UNKNOWN_OPCODE();
+
+    uint8_t XXX(); // UNKNOWN_OPCODE
+
+    // This structure is to debbug and reverse engineer
+
+    struct INSTRUCTION {
+        
+        /// @brief  the name of the instruction
+        std::string name;
+        /// @brief the ptr to the opcode
+        uint8_t(CPU_6502::*operate)(void) = nullptr;
+        /// @brief ptr to the address mode
+        uint8_t(CPU_6502::*addrmode)(void) = nullptr;
+        /// @brief nmbr of cycles the instruction requires to execute
+        uint8_t cycles = 0;
+        
+
+        /* data */
+    };
+
+    std::vector<INSTRUCTION> _lookup;
+    
 
 
     void clock();
@@ -140,8 +171,16 @@ public:
     // all these 03 functions can occur every time and can interupt the work of the cpu.
     // They are asynchronous
     void reset();
-    void interupt_required(); //irq (interupr required signal)
-    void non_masquable_interupt_request();
+    void interupt_required(); //irq (interupr required signal) can be ignored wether the interrupt enable flag is setle
+    void non_masquable_interupt_request(); // can never been disabled
+
+    /// @brief To fetch data for the cpu
+    /// @return 
+    uint8_t fetch();
+
+    uint8_t _fetched;
+
+
     
 
 };
