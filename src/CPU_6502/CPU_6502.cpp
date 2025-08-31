@@ -16,7 +16,7 @@ CPU_6502::CPU_6502(/* args */)
     _opcode = 0x00;
     _cycles = 0x00;
 
-
+// I am wondering if BRK on the 0,0 place has not as adreessing mode IMP insetead of IMM ????
     using a = CPU_6502;
 	_lookup = 
 	{
@@ -67,7 +67,118 @@ void CPU_6502::clock()
 		// we read what is stored at the PC (program counter). It is the opcode we will execute.
 		// this opcode (1 bytes) will serve to index the opcode table we have
 		_opcode = this->read(_program_counter);
-		// Then we increase the Program counter
+		// Then we increase the Program counter to be ready to read the next instruction
 		_program_counter++;
+		// here we put the number of cycle of the opcode in our internal cycle counter
+		_cycles = _lookup[_opcode].cycles;
+
+		// the function of the opcode return 0 or 1 indicating if it needs  another clock cycle to continue.
+		// Indeed if you look at the doc, you will see some of the instructions on the clock cycles need have a little curve on the number
+		// It indicates they could need additionnal cycle to execute. So We will catch those additional needs if necessay.
+		// So we will catch it and ruu
+
+		uint8_t additionnal_cycle1 = (this->*_lookup[_opcode].addrmode)();
+		uint8_t additionnal_cycle2 = (this->*_lookup[_opcode].operate)();
+
+		// if both addressmode function and operate function indicate they need additional clock cycles, We are going to add them to the cycles counter
+
+		_cycles += (additionnal_cycle1 & additionnal_cycle2);
+
 	}
+	// each time we call the clock function, one cycle has been counted
+	_cycles--;
+}
+
+void CPU_6502::Setflag(FLAGS6502 f, bool v)
+{
+	if (v)
+		_status_register |= f;
+	else
+		_status_register &= ~f;
+}
+
+// addressing modes
+
+/// @brief There is actually no data part of this instruction
+/// @return 0 because doesn't need anything additionnal
+uint8_t CPU_6502::IMP()
+{
+	// however, implied also means that it could be operating upon the accumulator.
+	// So we put the content of the accumulator into fetch var
+	_fetched = _accumulator_register;
+	return 0;
+}
+
+/// @brief Immidiate mode addressing means the data supply part of the rest of the instruction. The data (parameter) is going to be the next byte
+/// So We will store the actual pc adress (because pc has been incremented) as the address of the data to be read and then increase pc for it to
+/// point on the next instruction
+/// @return 
+uint8_t CPU_6502::IMM()
+{
+
+	_addr_abs = _program_counter;
+
+	_program_counter++;
+
+	return 0;
+
+}
+
+/// @brief Zero Page addressing
+/// @return 
+
+// pages are a conceptual way of organizing memory.
+/* It requires 16 bits to work.
+	Let's take the address 0x2315. It is a 16 bits Address. We can seperate it into 2 8 bits (1 byte) number. 23 and 15.
+	Here the first 1 byte number (8 bits) indicate the memory page where the information is storage and the second byte (8bits) indicates the offset.
+	Just Like a Table.
+
+	So the max is FF (256) pages (Because 00 is a page) and for each page the offset max is FF (256).
+	So when The adressing mode ZP0 is called, it means that, the absolute adress of the parameter is just on the read(program counter + 1) Offset 
+	of The 0 page. It can happend when developpers want to optimize process
+	So we read the 1 byte (2 bits) number on the next program counter memory space (let's call it var) and the absolute address will be 
+	absolute_adress = 0x00FF &= var (it will pack the 2bits at the end of 0x00) 
+
+*/
+uint8_t CPU_6502::ZP0()
+{
+	_addr_abs = read(_program_counter);
+	_addr_abs &= 0x00FF;
+	_program_counter+= 1;
+
+	return 0;
+
+}
+/// @brief Zero page register with an offset of X
+/// @return 
+
+/*
+	The same as ZP0 but here we read the content at program_counter + the_content_of_register_X
+	It cpimd be used to iterate through an array
+
+*/
+uint8_t CPU_6502::ZPX()
+{
+	_addr_abs = read(_program_counter + _x);
+	_addr_abs &= 0x00FF;
+	_program_counter+= 1;
+
+	return 0;
+}
+
+/// @brief Zero page register with an offset of X
+/// @return 
+
+/*
+	The same as ZP0 but here we read the content at program_counter + the_content_of_register_y
+	It cpimd be used to iterate through an array
+
+*/
+uint8_t CPU_6502::ZPY()
+{
+	_addr_abs = read(_program_counter + _y);
+	_addr_abs &= 0x00FF;
+	_program_counter+= 1;
+
+	return 0;
 }
