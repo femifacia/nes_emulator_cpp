@@ -222,7 +222,7 @@ uint8_t CPU_6502::ABX()
 
 	if ((_addr_abs & 0xFF00) != (high << 8))
 		return 1;
-	return 1;
+	return 0;
 
 }
 
@@ -247,7 +247,101 @@ uint8_t CPU_6502::ABY()
 
 	if ((_addr_abs & 0xFF00) != (high << 8))
 		return 1;
-	return 1;
+	return 0;
+
+}
+
+
+/// @brief Indirect Mode. It is the 6502 way to implement pointer
+/// @return 
+
+/*
+	First we assemble the ptr adress by concate the content of the two following memory space on the ram[program_counter]
+	Then, we will read what is at this ptr address (1byte) and what is at the ptr + 1 address and we concat them to have the absolute address
+
+	Indeed the param adress is a pointer so we have to see what is at the address of this pointer. The answer has been split into ptr and ptr + 1
+
+	BUT BE CARREFULL. Because we are doing ptr + 1, The page can change and in this case, if the ptr was FFFF, adding a + 1 to the higher part
+	OxFF will cause an overflow
+
+	ALSO there was a bug initially in the 6502. Where the low was FF, the ptr Didn't add + 1 to the higher part. We will implement these bug
+*/
+
+uint8_t CPU_6502::IND()
+{
+	uint16_t ptr_low = this->read(_program_counter);
+	_program_counter ++;
+	uint16_t ptr_high = this->read(_program_counter);
+	_program_counter ++;
+
+	uint16_t ptr = (ptr_high << 8) | ptr_low;
+
+	if (ptr_low == 0xFF) // the bug we implemented
+		_addr_abs = (this->read(ptr & 0xFF00 ) << 8) | (this->read(ptr + 0));
+	else // normal behavior
+		_addr_abs = (this->read(ptr + 1 ) << 8) | (this->read(ptr + 0));
+
+	return 0;
+
+}
+
+
+/// @brief Indirect Addressing of the zero page with an offset of X
+/// @return 
+uint8_t CPU_6502::INX()
+{
+	uint16_t t = this->read(_program_counter);
+	_program_counter ++;
+
+	// we supply the content of the ram by the content of the x register
+
+	uint16_t ptr_low = this->read((uint16_t) (t + (uint16_t)_x) & 0x00FF);
+	uint16_t ptr_high = this->read((uint16_t) (t + (uint16_t)_x + 1) & 0x00FF);
+
+	uint16_t ptr = (ptr_high << 8) | ptr_low;
+
+	if (ptr_low == 0xFF) // the bug we implemented
+		_addr_abs = (this->read(ptr & 0xFF00 ) << 8) | (this->read(ptr + 0));
+	else // normal behavior
+		_addr_abs = (this->read(ptr + 1 ) << 8) | (this->read(ptr + 0));
+
+	return 0;
+
+}
+
+/// @brief Indirect Addressing of the zero page with an offset of y BUT IT IS QUITE DIFFERENT WITH THE INX
+/// @return 
+uint8_t CPU_6502::INY()
+{
+	uint16_t t = this->read(_program_counter);
+	_program_counter++;
+
+
+	uint16_t ptr_low = this->read(t & 0x00FF);
+	uint16_t ptr_high = this->read((t + 1) & 0x00FF);
+
+	_addr_abs = (ptr_high << 8) | ptr_low;
+	_addr_abs += _y;
+
+	if (ptr_high << 8 != _addr_abs & 0XFF00) 
+		return 1;
+
+	return 0;
+
+}
+
+/// @brief Relative addressing mode. It only happens to branch instructions
+/// @return 
+uint8_t CPU_6502::REL()
+{
+
+	// for doc check https://youtu.be/8XmxKPJDGU0?si=0CuBBEGAj5vJPN2N&t=2275
+	_addr_relative = this->read(_program_counter);
+	_program_counter++;
+
+	if (_addr_relative & 0x80)
+		_addr_relative |= 0xFF00;
+	return 0;
 
 }
 
