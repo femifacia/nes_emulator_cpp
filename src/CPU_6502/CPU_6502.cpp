@@ -182,3 +182,72 @@ uint8_t CPU_6502::ZPY()
 
 	return 0;
 }
+
+
+/// @brief Absolute addressing mode. Sometime, we need the full adress.
+/// But we can only store 8 bits info although an addr is 16 bits. So we will read the info on the program_counter place and the following one
+/// Then concat these 8 bits data to have a 16 bits data
+/// @return 
+uint8_t CPU_6502::ABS()
+{
+	uint16_t low = this->read(_program_counter);
+	_program_counter ++;
+	uint16_t high = this->read(_program_counter);
+	_program_counter ++;
+
+	// we concate the two 8 bits to have a 16 bits data
+	_addr_abs = (high << 8) | low;
+	return 0;
+}
+
+
+/// @brief Absolute addressing mode with offset X
+/// @return 
+uint8_t CPU_6502::ABX()
+{
+	uint16_t low = this->read(_program_counter);
+	_program_counter ++;
+	uint16_t high = this->read(_program_counter);
+	_program_counter ++;
+
+	// we concate the two 8 bits to have a 16 bits data
+	_addr_abs = (high << 8) | low;
+
+	_addr_abs += _x;
+
+	/* 
+		Be carefull !!
+		If after the add of x register content, the address has change its page, it may need we could need another cycle
+	*/
+
+	if ((_addr_abs & 0xFF00) != (high << 8))
+		return 1;
+	return 1;
+
+}
+
+/// @brief Absolute addressing mode with offset y
+/// @return 
+uint8_t CPU_6502::ABY()
+{
+	uint16_t low = this->read(_program_counter);
+	_program_counter ++;
+	uint16_t high = this->read(_program_counter);
+	_program_counter ++;
+
+	// we concate the two 8 bits to have a 16 bits data
+	_addr_abs = (high << 8) | low;
+
+	_addr_abs += _y;
+
+	/* 
+		Be carefull !!
+		If after the add of x register content, the address has change its page, it may need we could need another cycle
+	*/
+
+	if ((_addr_abs & 0xFF00) != (high << 8))
+		return 1;
+	return 1;
+
+}
+
