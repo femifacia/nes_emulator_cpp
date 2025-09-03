@@ -89,8 +89,12 @@ void CPU_6502::clock()
 	_cycles--;
 }
 
+/// @brief Set the flag f is v is true by updating status register
+/// @param f flag to set
+/// @param v Bool
 void CPU_6502::Setflag(FLAGS6502 f, bool v)
 {
+	// if the conditionn is validated we set the flag f
 	if (v)
 		_status_register |= f;
 	else
@@ -345,3 +349,213 @@ uint8_t CPU_6502::REL()
 
 }
 
+// instructions
+
+/// @brief When we know where to read the supply data (parameter), it is time to fetch it and store it
+/// @return 
+uint8_t CPU_6502::fetch()
+{
+
+	// if it is Implied mode, there is no data to fetch
+	if (! (_lookup[_opcode].addrmode == &CPU_6502::IMP))
+		_fetched = read(_addr_abs);
+	return _fetched;
+}
+
+
+/// @brief And between fetcehd data and accumulator register
+/// @return 
+uint8_t CPU_6502::AND()
+{
+	fetch();
+	_accumulator_register &= _fetched;
+	//if all bytes are equal to zero, we set the ZERO flag
+	Setflag(Z, _accumulator_register == 0x00);
+	// Negative flag is bit 7 is equal to 1
+	Setflag(N, _accumulator_register & 0x80);
+	return 1; // because this instruction can require another clock cycle
+}
+
+
+/// @brief Branch if the carried register status is set to 1
+/// @return 
+uint8_t CPU_6502::BCS()
+{
+	if (GetFlag(C) == 1) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+
+/// @brief Branch if the carried register status is set to 0
+/// @return 
+uint8_t CPU_6502::BCC()
+{
+	if (GetFlag(C) == 0) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+/// @brief Branch if the carried equal 
+/// @return 
+uint8_t CPU_6502::BEQ()
+{
+	if (GetFlag(Z) == 1) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+
+/// @brief Branch if Not equal
+/// @return 
+uint8_t CPU_6502::BNE()
+{
+	if (GetFlag(Z) == 0) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+
+/// @brief Branch if negative
+/// @return 
+uint8_t CPU_6502::BMI()
+{
+	if (GetFlag(N) == 1) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+/// @brief Branch if Positive
+/// @return 
+uint8_t CPU_6502::BPL()
+{
+	if (GetFlag(N) == 0) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+/// @brief Branch if Overflow
+/// @return 
+uint8_t CPU_6502::BVC()
+{
+	if (GetFlag(V) == 0) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+/// @brief Branch if not overflow
+/// @return 
+uint8_t CPU_6502::BVS()
+{
+	if (GetFlag(V) == 1) {
+	 _cycles++;
+	// branch instructions are unique and will directly modify the number of cycles
+	// When a branch is taken, it will add 1 to the total of cycles required for that intructions
+	_addr_abs = _program_counter + _addr_relative;
+	// and if a branch have to cross a page of boundarie we add one additionnal cycle "penalty" It is in a doc
+	 if ((_addr_abs & 0xFF00) != (_program_counter & 0XFF00))
+		 _cycles++;
+	// I set the current programm addr by the newly calculated addr
+	 _program_counter = _addr_abs;
+	}
+	return 0;
+}
+
+
+/// @brief Clear the carry bit. Set the bit in the status register
+/// @return 
+uint8_t CPU_6502::CLC()
+{
+	Setflag(C, false);
+	return 0;
+}
+
+
+/// @brief Clear Decimal Flag
+/// @return 
+uint8_t CPU_6502::CLD()
+{
+	Setflag(D, false);
+	return 0;
+}
+
+
+/// @brief Clear Overflow Flag
+/// @return 
+uint8_t CPU_6502::CLV()
+{
+	Setflag(V, false);
+	return 0;
+}
+
+
+/// @brief Disable Interrupts / Clear Interrupt Flag
+/// @return 
+uint8_t CPU_6502::CLI()
+{
+	Setflag(I, false);
+	return 0;
+}
