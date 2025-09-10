@@ -559,3 +559,13 @@ uint8_t CPU_6502::CLI()
 	Setflag(I, false);
 	return 0;
 }
+
+uint8_t CPU_6502::ADC()
+{
+
+}
+
+uint8_t CPU_6502::SBC()
+{
+	
+}
