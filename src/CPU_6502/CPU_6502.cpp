@@ -562,10 +562,29 @@ uint8_t CPU_6502::CLI()
 
 uint8_t CPU_6502::ADC()
 {
+	this->fetch();
+
+	// We perfom the addition under 16 bits. 
+	// We do not forget about the varry
+	uint16_t temp = (uint16_t) _accumulator_register + (uint16_t)_fetched + (uint16_t)GetFlag(C); 
+	// Because the temp is a 16 bits var, we can quickly check if after the operation, we need to set the carry bit
+	Setflag(C, temp > 255);
+	Setflag(Z, (temp & 0x00FF) == 0);
+	// The negative bit is set when the most significant bit of the LOW BYTE of the restult is set
+	Setflag(N, temp & 0x80);
+
+	// check out the notes on the read me to understand How We Set the V (Overflow) bit of the status register
+	Setflag(V, (~((uint16_t)_accumulator_register ^ (uint16_t)_fetched) & ((uint16_t)_accumulator_register ^ (uint16_t)temp)) & 0x0080);
+	
+	// Load the result into the accumulator (it's 8-bit dont forget!)
+	_accumulator_register = temp & 0x00FF;
+	
+	// This instruction has the potential to require an additional clock cycle
+	return 1;
 
 }
 
 uint8_t CPU_6502::SBC()
 {
-	
+
 }
