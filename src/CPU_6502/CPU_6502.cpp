@@ -602,3 +602,27 @@ uint8_t CPU_6502::SBC()
 	_accumulator_register = temp & 0x00FF;
 	return 1;
 }
+
+/// @brief Push the accumulator into the stack and decrease the stack pointer
+/// @return 
+uint8_t CPU_6502::PHA()
+{
+	//The 6502 has hardcoded a basic locationfor the stack 0x0100
+	this->write(0x0100 + _stack_pointer, _accumulator_register);
+	_stack_pointer --;
+	return 0;
+}
+
+
+/// @brief Pop data from the stack to the accumulator register
+/// @return 
+uint8_t CPU_6502::PLA()
+{
+	_stack_pointer++;
+	_accumulator_register = this->read(0X0100 + _stack_pointer);
+	// We also set Z and N to status register if accumulator is Z or N
+	Setflag(Z, _accumulator_register==0x00);
+	Setflag(N, _accumulator_register & 0X80);
+	return 0;
+}
+
