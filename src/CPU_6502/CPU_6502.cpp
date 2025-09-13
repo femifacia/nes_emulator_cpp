@@ -89,9 +89,17 @@ void CPU_6502::clock()
 	_cycles--;
 }
 
-/// @brief Set the flag f is v is true by updating status register
+
+// Returns the value of a specific bit of the status register
+uint8_t CPU_6502::GetFlag(FLAGS6502 f)
+{
+	return ((_status_register & f) > 0) ? 1 : 0;
+}
+
+
+/// @brief Set the flag f is v is true by updating status register otherwise unset it
 /// @param f flag to set
-/// @param v Bool
+/// @param v Bool. If true set the flag on the status register. Else Un set it
 void CPU_6502::Setflag(FLAGS6502 f, bool v)
 {
 	// if the conditionn is validated we set the flag f
@@ -349,6 +357,50 @@ uint8_t CPU_6502::REL()
 
 }
 
+
+// Address Mode: Indirect X
+// The supplied 8-bit address is offset by X Register to index
+// a location in page 0x00. The actual 16-bit address is read 
+// from this location
+uint8_t CPU_6502::IZX()
+{
+	uint16_t t = read(_program_counter);
+	_program_counter++;
+
+	uint16_t lo = read((uint16_t)(t + (uint16_t)_x) & 0x00FF);
+	uint16_t hi = read((uint16_t)(t + (uint16_t)_x + 1) & 0x00FF);
+
+	_addr_abs = (hi << 8) | lo;
+	
+	return 0;
+}
+
+
+// Address Mode: Indirect Y
+// The supplied 8-bit address indexes a location in page 0x00. From 
+// here the actual 16-bit address is read, and the contents of
+// Y Register is added to it to offset it. If the offset causes a
+// change in page then an additional clock cycle is required.
+uint8_t CPU_6502::IZY()
+{
+	uint16_t t = read(_program_counter);
+	_program_counter++;
+
+	uint16_t lo = read(t & 0x00FF);
+	uint16_t hi = read((t + 1) & 0x00FF);
+
+	_addr_abs = (hi << 8) | lo;
+	_addr_abs += _y;
+	
+	if ((_addr_abs & 0xFF00) != (hi << 8))
+		return 1;
+	else
+		return 0;
+}
+
+
+
+
 // instructions
 
 /// @brief When we know where to read the supply data (parameter), it is time to fetch it and store it
@@ -557,6 +609,50 @@ uint8_t CPU_6502::CLV()
 uint8_t CPU_6502::CLI()
 {
 	Setflag(I, false);
+	return 0;
+}
+
+
+uint8_t CPU_6502::ASL()
+{
+	fetch();
+	uint16_t temp = (uint16_t)_fetched << 1;
+	Setflag(C, (temp & 0xFF00) > 0);
+	Setflag(Z, (temp & 0x00FF) == 0x00);
+	Setflag(N, temp & 0x80);
+	if (_lookup[_opcode].addrmode == &CPU_6502::IMP)
+		_accumulator_register = temp & 0x00FF;
+	else
+		write(_addr_abs, temp & 0x00FF);
+	return 0;
+}
+
+uint8_t CPU_6502::BIT()
+{
+	fetch();
+	uint16_t temp = _accumulator_register & _fetched;
+	Setflag(Z, (temp & 0x00FF) == 0x00);
+	Setflag(N, _fetched & (1 << 7));
+	Setflag(V, _fetched & (1 << 6));
+	return 0;
+}
+
+uint8_t CPU_6502::BRK()
+{
+	_program_counter++;
+	
+	Setflag(I, 1);
+	write(0x0100 + _stack_pointer, (_program_counter >> 8) & 0x00FF);
+	_stack_pointer--;
+	write(0x0100 + _stack_pointer, _program_counter & 0x00FF);
+	_stack_pointer--;
+
+	Setflag(B, 1);
+	write(0x0100 + _stack_pointer, _status_register);
+	_stack_pointer--;
+	Setflag(B, 0);
+
+	_program_counter = (uint16_t)read(0xFFFE) | ((uint16_t)read(0xFFFF) << 8);
 	return 0;
 }
 
