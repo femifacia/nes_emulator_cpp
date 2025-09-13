@@ -171,7 +171,7 @@ public:
     // all these 03 functions can occur every time and can interupt the work of the cpu.
     // They are asynchronous
     void reset();
-    void interupt_required(); //irq (interupr required signal) can be ignored wether the interrupt enable flag is setle
+    void interupt_requested(); //irq (interupr required signal) can be ignored wether the interrupt enable flag is setle
     void non_masquable_interupt_request(); // can never been disabled
 
     /// @brief To fetch data for the cpu

@@ -626,3 +626,117 @@ uint8_t CPU_6502::PLA()
 	return 0;
 }
 
+
+/// @brief It configure the CPu into a none state
+void CPU_6502::reset()
+{
+	_accumulator_register = 0;
+	_x = 0;
+	_y = 0;
+	_stack_pointer = 0XFD;
+	_status_register = 0X00 | U;
+
+
+	// To set the value of the program counter, we could be tempted to put 0
+	// But this value has to be set somewhere in the memory so the programmer can change it
+	// without having to compile the whole machine. So the value will be stocked at
+	// 0XFFFC and OFFCD and will be concatened to know the starting programe counter
+	_addr_abs = 0xFFFC;
+	uint16_t lo = read(_addr_abs + 0);
+	uint16_t hi = read(_addr_abs + 1);
+
+	_program_counter = (hi << 8) | lo;
+
+	_addr_relative = 0x0000;
+	_addr_abs = 0x0000;
+	_fetched = 0x00;
+
+	//resets take times so We are gonna internally hardcode it
+	_cycles = 8;
+}
+
+/// @brief interrupt request
+void CPU_6502::interupt_requested()
+{
+	// It can be ignore if the diable Interrupt bit has npt been set
+	// We want to inteerupt the programm
+	// So we will save the current status of the programm in the stack
+	if (GetFlag(I) == 0) {
+		write(0x100 + _stack_pointer, (_program_counter >> 8) & 0x00FF );
+		_stack_pointer--;
+		write(0x0100 + _stack_pointer, _program_counter & 0x00FF);
+		_stack_pointer--;
+
+
+		//Some bits has been said to indicated an interruption has occurred
+		Setflag(B, 0);
+		Setflag(U, 1);
+		Setflag(I, 1);
+		// Then Push the status register to the stack
+		write(0x0100 + _stack_pointer, _status_register);
+		_stack_pointer--;
+
+		// Read new program counter location from fixed address
+
+		// It then force the program to jump into a location set by the programmer if an intteruption occurs
+		_addr_abs = 0xFFFE;
+		uint16_t lo = read(_addr_abs + 0);
+		uint16_t hi = read(_addr_abs + 1);
+		_program_counter = (hi << 8) | lo;
+
+
+		// IRQs take time
+		_cycles = 7;
+
+	}
+
+}
+
+/// @brief interrupt request non masquable. Same as IRQ BUTTTT we jump program counter into another address
+void CPU_6502::non_masquable_interupt_request()
+{
+	// We want to inteerupt the programm
+	// So we will save the current status of the programm in the stack
+	write(0x100 + _stack_pointer, (_program_counter >> 8) & 0x00FF );
+	_stack_pointer--;
+	write(0x0100 + _stack_pointer, _program_counter & 0x00FF);
+	_stack_pointer--;
+	//Some bits has been said to indicated an interruption has occurred
+	Setflag(B, 0);
+	Setflag(U, 1);
+	Setflag(I, 1);
+	// Then Push the status register to the stack
+	write(0x0100 + _stack_pointer, _status_register);
+	_stack_pointer--;
+	// Read new program counter location from fixed address
+	// It then force the program to jump into a location set by the programmer if an intteruption occurs
+
+
+	_addr_abs = 0xFFFA;
+	uint16_t lo = read(_addr_abs + 0);
+	uint16_t hi = read(_addr_abs + 1);
+	_program_counter = (hi << 8) | lo;
+	// IRQs take time
+	_cycles = 7;
+}
+
+
+/// @brief Return From interupt. It restore the state of the CPU Before the interruption
+uint8_t CPU_6502::RTI()
+{
+	// we read the status register from the stack
+	_stack_pointer++;
+	_status_register = read(0x100 + _stack_pointer);
+	// We unset interuption bits
+	_status_register &= ~B;
+	_status_register &= ~U;
+
+	// We fill the program counter with its original value
+
+	_stack_pointer++;
+	_program_counter = (uint16_t)read(0x0100 + _stack_pointer);
+	_stack_pointer++;
+	_program_counter |= read(0x0100 + _stack_pointer) << 8;
+	return 0;
+
+}
