@@ -656,6 +656,407 @@ uint8_t CPU_6502::BRK()
 	return 0;
 }
 
+#include "CPU_6502.hpp"
+#include "../Bus/Bus.hpp"
+
+uint8_t CPU_6502::CMP()
+{
+	fetch();
+	uint16_t temp = (uint16_t)_accumulator_register - (uint16_t)_fetched;
+	Setflag(C, _accumulator_register >= _fetched);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	return 1;
+}
+
+
+// Instruction: Compare _x Register
+// Function:    C <- _x >= M      Z <- (_x - M) == 0
+// Flags Out:   N, C, Z
+uint8_t CPU_6502::CPX()
+{
+	fetch();
+	uint16_t temp = (uint16_t)_x - (uint16_t)_fetched;
+	Setflag(C, _x >= _fetched);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	return 0;
+}
+
+
+// Instruction: Compare Y Register
+// Function:    C <- Y >= M      Z <- (Y - M) == 0
+// Flags Out:   N, C, Z
+uint8_t CPU_6502::CPY()
+{
+	fetch();
+	uint16_t temp = (uint16_t)_y - (uint16_t)_fetched;
+	Setflag(C, _y >= _fetched);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	return 0;
+}
+
+// Instruction: Decrement Value at Memory Location
+// Function:    M = M - 1
+// Flags Out:   N, Z
+uint8_t CPU_6502::DEC()
+{
+	fetch();
+	uint16_t temp = _fetched - 1;
+	write(_addr_abs, temp & 0x00FF);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	return 0;
+}
+
+
+// Instruction: Decrement _x Register
+// Function:    _x = _x - 1
+// Flags Out:   N, Z
+uint8_t CPU_6502::DEX()
+{
+	_x--;
+	Setflag(Z, _x == 0x00);
+	Setflag(N, _x & 0x80);
+	return 0;
+}
+
+
+// Instruction: Decrement Y Register
+// Function:    Y = Y - 1
+// Flags Out:   N, Z
+uint8_t CPU_6502::DEY()
+{
+	_y--;
+	Setflag(Z, _y == 0x00);
+	Setflag(N, _y & 0x80);
+	return 0;
+}
+
+uint8_t CPU_6502::EOR()
+{
+	fetch();
+	_accumulator_register = _accumulator_register ^ _fetched;	
+	Setflag(Z, _accumulator_register == 0x00);
+	Setflag(N, _accumulator_register & 0x80);
+	return 1;
+}
+
+
+// Instruction: Increment Value at Memory Location
+// Function:    M = M + 1
+// Flags Out:   N, Z
+uint8_t CPU_6502::INC()
+{
+	fetch();
+	uint16_t temp = _fetched + 1;
+	write(_addr_abs, temp & 0x00FF);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	return 0;
+}
+
+// Instruction: Jump To Location
+// Function:    _program_counter = address
+uint8_t CPU_6502::JMP()
+{
+	_program_counter = _addr_abs;
+	return 0;
+}
+
+
+// Instruction: Jump To Sub-Routine
+// Function:    Push current _program_counter to stack, _program_counter = address
+uint8_t CPU_6502::JSR()
+{
+	_program_counter--;
+
+	write(0x0100 + _stack_pointer, (_program_counter >> 8) & 0x00FF);
+	_stack_pointer--;
+	write(0x0100 + _stack_pointer, _program_counter & 0x00FF);
+	_stack_pointer--;
+
+	_program_counter = _addr_abs;
+	return 0;
+}
+
+
+// Instruction: Load The Accumulator
+// Function:    A = M
+// Flags Out:   N, Z
+uint8_t CPU_6502::LDA()
+{
+	fetch();
+	_accumulator_register = _fetched;
+	Setflag(Z, _accumulator_register == 0x00);
+	Setflag(N, _accumulator_register & 0x80);
+	return 1;
+}
+
+
+// Instruction: Load The _x Register
+// Function:    _x = M
+// Flags Out:   N, Z
+uint8_t CPU_6502::LDX()
+{
+	fetch();
+	_x = _fetched;
+	Setflag(Z, _x == 0x00);
+	Setflag(N, _x & 0x80);
+	return 1;
+}
+
+
+// Instruction: Load The Y Register
+// Function:    Y = M
+// Flags Out:   N, Z
+uint8_t CPU_6502::LDY()
+{
+	fetch();
+	_y = _fetched;
+	Setflag(Z, _y == 0x00);
+	Setflag(N, _y & 0x80);
+	return 1;
+}
+
+uint8_t CPU_6502::LSR()
+{
+	fetch();
+	Setflag(C, _fetched & 0x0001);
+	uint16_t temp = _fetched >> 1;	
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	if (_lookup[_opcode].addrmode == &CPU_6502::IMP)
+		_accumulator_register = temp & 0x00FF;
+	else
+		write(_addr_abs, temp & 0x00FF);
+	return 0;
+}
+
+uint8_t CPU_6502::NOP()
+{
+	// Sadly not all NOPs are equal, Ive added a few here
+	// based on https://wiki.nesdev.com/w/index.php/CPU_unofficial__opcodes
+	// and will add more based on game compatibility, and ultimately
+	// I'd like to cover all illegal _opcodes too
+	switch (_opcode) {
+	case 0x1C:
+	case 0x3C:
+	case 0x5C:
+	case 0x7C:
+	case 0xDC:
+	case 0xFC:
+		return 1;
+		break;
+	}
+	return 0;
+}
+
+
+// Instruction: Bitwise Logic OR
+// Function:    A = A | M
+// Flags Out:   N, Z
+uint8_t CPU_6502::ORA()
+{
+	fetch();
+	_accumulator_register = _accumulator_register | _fetched;
+	Setflag(Z, _accumulator_register == 0x00);
+	Setflag(N, _accumulator_register & 0x80);
+	return 1;
+}
+
+// Instruction: Push Status Register to Stack
+// Function:    status -> stack
+// Note:        Break flag is set to 1 before push
+uint8_t CPU_6502::PHP()
+{
+	write(0x0100 + _stack_pointer, _status_register | B | U);
+	Setflag(B, 0);
+	Setflag(U, 0);
+	_stack_pointer--;
+	return 0;
+}
+
+uint8_t CPU_6502::PLP()
+{
+	_stack_pointer++;
+	_status_register = read(0x0100 + _stack_pointer);
+	Setflag(U, 1);
+	return 0;
+}
+
+uint8_t CPU_6502::ROL()
+{
+	fetch();
+	uint16_t temp = (uint16_t)(_fetched << 1) | GetFlag(C);
+	Setflag(C, temp & 0xFF00);
+	Setflag(Z, (temp & 0x00FF) == 0x0000);
+	Setflag(N, temp & 0x0080);
+	if (_lookup[_opcode].addrmode == &CPU_6502::IMP)
+		_accumulator_register = temp & 0x00FF;
+	else
+		write(_addr_abs, temp & 0x00FF);
+	return 0;
+}
+
+uint8_t CPU_6502::ROR()
+{
+	fetch();
+	uint16_t temp = (uint16_t)(GetFlag(C) << 7) | (_fetched >> 1);
+	Setflag(C, _fetched & 0x01);
+	Setflag(Z, (temp & 0x00FF) == 0x00);
+	Setflag(N, temp & 0x0080);
+	if (_lookup[_opcode].addrmode == &CPU_6502::IMP)
+		_accumulator_register = temp & 0x00FF;
+	else
+		write(_addr_abs, temp & 0x00FF);
+	return 0;
+}
+
+uint8_t CPU_6502::RTS()
+{
+	_stack_pointer++;
+	_program_counter = (uint16_t)read(0x0100 + _stack_pointer);
+	_stack_pointer++;
+	_program_counter |= (uint16_t)read(0x0100 + _stack_pointer) << 8;
+	
+	_program_counter++;
+	return 0;
+}
+
+
+
+
+// Instruction: Set Carry Flag
+// Function:    C = 1
+uint8_t CPU_6502::SEC()
+{
+	Setflag(C, true);
+	return 0;
+}
+
+
+// Instruction: Set Decimal Flag
+// Function:    D = 1
+uint8_t CPU_6502::SED()
+{
+	Setflag(D, true);
+	return 0;
+}
+
+
+// Instruction: Set Interrupt Flag / Enable Interrupts
+// Function:    I = 1
+uint8_t CPU_6502::SEI()
+{
+	Setflag(I, true);
+	return 0;
+}
+
+// Instruction: Store Accumulator at Address
+// Function:    M = A
+uint8_t CPU_6502::STA()
+{
+	write(_addr_abs, _accumulator_register);
+	return 0;
+}
+
+
+// Instruction: Store _x Register at Address
+// Function:    M = _x
+uint8_t CPU_6502::STX()
+{
+	write(_addr_abs, _x);
+	return 0;
+}
+
+
+// Instruction: Store Y Register at Address
+// Function:    M = Y
+uint8_t CPU_6502::STY()
+{
+	write(_addr_abs, _y);
+	return 0;
+}
+
+
+// Instruction: Transfer Accumulator to _x Register
+// Function:    _x = A
+// Flags Out:   N, Z
+uint8_t CPU_6502::TAX()
+{
+	_x = _accumulator_register;
+	Setflag(Z, _x == 0x00);
+	Setflag(N, _x & 0x80);
+	return 0;
+}
+
+
+// Instruction: Transfer Accumulator to Y Register
+// Function:    Y = A
+// Flags Out:   N, Z
+uint8_t CPU_6502::TAY()
+{
+	_y = _accumulator_register;
+	Setflag(Z, _y == 0x00);
+	Setflag(N, _y & 0x80);
+	return 0;
+}
+
+
+// Instruction: Transfer Stack Pointer to _x Register
+// Function:    _x = stack pointer
+// Flags Out:   N, Z
+uint8_t CPU_6502::TSX()
+{
+	_x = _stack_pointer;
+	Setflag(Z, _x == 0x00);
+	Setflag(N, _x & 0x80);
+	return 0;
+}
+
+
+// Instruction: Transfer _x Register to Accumulator
+// Function:    A = _x
+// Flags Out:   N, Z
+uint8_t CPU_6502::TXA()
+{
+	_accumulator_register = _x;
+	Setflag(Z, _accumulator_register == 0x00);
+	Setflag(N, _accumulator_register & 0x80);
+	return 0;
+}
+
+
+// Instruction: Transfer _x Register to Stack Pointer
+// Function:    stack pointer = _x
+uint8_t CPU_6502::TXS()
+{
+	_stack_pointer = _x;
+	return 0;
+}
+
+
+// Instruction: Transfer Y Register to Accumulator
+// Function:    A = Y
+// Flags Out:   N, Z
+uint8_t CPU_6502::TYA()
+{
+	_accumulator_register = _y;
+	Setflag(Z, _accumulator_register == 0x00);
+	Setflag(N, _accumulator_register & 0x80);
+	return 0;
+}
+
+
+// This function captures illegal _opcodes
+uint8_t CPU_6502::XXX()
+{
+	return 0;
+}
+
+
 uint8_t CPU_6502::ADC()
 {
 	this->fetch();
