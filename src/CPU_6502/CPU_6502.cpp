@@ -586,5 +586,19 @@ uint8_t CPU_6502::ADC()
 
 uint8_t CPU_6502::SBC()
 {
-
+	this->fetch();
+	
+	// Operating in 16-bit domain to capture carry out
+	
+	// We can invert the bottom 8 bits with bitwise xor
+	uint16_t value = ((uint16_t)_fetched) ^ 0x00FF;
+	
+	// Notice this is exactly the same as addition from here!
+	uint16_t  temp = (uint16_t)_accumulator_register + value + (uint16_t)GetFlag(C);
+	Setflag(C, temp & 0xFF00);
+	Setflag(Z, ((temp & 0x00FF) == 0));
+	Setflag(V, (temp ^ (uint16_t)_accumulator_register) & (temp ^ value) & 0x0080);
+	Setflag(N, temp & 0x0080);
+	_accumulator_register = temp & 0x00FF;
+	return 1;
 }
