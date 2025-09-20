@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <map>
 class Bus;
 
 class CPU_6502
@@ -11,15 +12,19 @@ private:
 
     Bus *_bus;
 
+
+
+public:
+
+    uint16_t _program_counter;
+
     uint8_t _accumulator_register; //accumulator register
     uint8_t _x; //x register
     uint8_t _y; //y register
     uint8_t _stack_pointer; // stack pointer: Point to location on the bus
-    uint16_t _program_counter;
     uint8_t _status_register; // status register
 
 
-public:
     /// @brief is an enumeration of the bits on the status register
     /// As a reminder, (8 bits) Status Register (contains bit which let us interogate about the state of the CPU) 
     /// for ex: Was the last result equal to 0 ?Has there been a carry operation, Instruct the CPU to do Thng (Interruptions etc....)
@@ -34,6 +39,8 @@ public:
         N =  (1 << 7)  // Negative
 
     };
+
+    bool complete();
 
 private:
     // function to access status register flag
@@ -180,6 +187,7 @@ public:
 
     uint8_t _fetched;
 
+    std::map<uint16_t, std::string> disassemble(uint16_t nStart, uint16_t nStop);
 
     
 

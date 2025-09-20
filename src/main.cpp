@@ -1,6 +1,7 @@
 #include <iostream>
 #include "./Bus/Bus.hpp"
 
+
 int main(int argc, char **argv)
 {
     Bus bus;
@@ -10,3 +11,4 @@ int main(int argc, char **argv)
     std::cout << val << std::endl;
     return 0;
 }
+

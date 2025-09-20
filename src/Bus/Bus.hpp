@@ -10,15 +10,19 @@
 class Bus
 {
 private: 
-    /* Devices on the BUS */
-    CPU_6502 _cpu;
 
-    /* RAM*/
-    std::array<uint8_t, 64 * 1024> _ram; // 64KB ram
+
 
 public:
     Bus(/* args */);
     ~Bus();
+
+        /* Devices on the BUS */
+    CPU_6502 _cpu;
+
+
+    /* RAM*/
+    std::array<uint8_t, 64 * 1024> _ram; // 64KB ram
 
     /// @brief Write Data on the bus
     /// @param addr 
