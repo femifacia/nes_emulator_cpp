@@ -62,8 +62,10 @@ uint8_t CPU_6502::read(uint16_t addr)
 
 void CPU_6502::clock()
 {
+
 	// here we will just act when the cycle counter is 0
 	if (_cycles == 0) {
+    std::cout << (int)_status_register << "  l"<<std::endl;
 		// we read what is stored at the PC (program counter). It is the opcode we will execute.
 		// this opcode (1 bytes) will serve to index the opcode table we have
 		_opcode = this->read(_program_counter);
