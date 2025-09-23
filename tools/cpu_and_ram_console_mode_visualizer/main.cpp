@@ -1,4 +1,5 @@
 #include "../../src/Bus/Bus.hpp"
+#include <sstream>
 
 std::string hex(uint32_t n, uint8_t d)
 {
@@ -34,7 +35,7 @@ void drawCpuStatus(Bus *nes)
     std::string red("\033[31m");
     std::string green("\033[32m");
     std::string stop_color("\033[00m");
-    std::string cyan("\033[35m");
+    std::string cyan("\033[36m");
 
     std::cout << "----CPU status------" << std::endl;
     // status register
@@ -53,8 +54,24 @@ void drawCpuStatus(Bus *nes)
     std::cout << blue << "[X Register]: " << (nes->_cpu._x ? cyan : stop_color )<<"$" << hex(nes->_cpu._x, 2) << stop_color<< std::endl;
     std::cout << blue << "[Y Register]: " << (nes->_cpu._y ? cyan : stop_color ) << "$" <<hex(nes->_cpu._y, 2) << stop_color<< std::endl;
     std::cout << blue << "[Accumulator Register]: " << (nes->_cpu._accumulator_register ? cyan : stop_color ) << "$"<< hex(nes->_cpu._accumulator_register, 2) << stop_color<< std::endl;
+    std::cout << blue << "[Stack Pointer]: " << (nes->_cpu._stack_pointer ? cyan : stop_color ) << "$"<< hex(nes->_cpu._stack_pointer, 2) << stop_color<< std::endl;
 
     
+}
+
+void drawCurrentStatus(Bus *nes, uint16_t start, uint16_t end)
+{
+    std::string stop_color("\033[00m");
+    std::string cyan("\033[36m");
+    std::string violet("\033[35m");
+    std::cout << std::endl << violet << "CURRENT STATUS" << stop_color<< std::endl;
+    auto disassembly = nes->_cpu.disassemble(start, end);
+
+    for (const auto& [addr, instr] : disassembly) {
+        if (addr == nes->_cpu._program_counter)
+            std::cout << cyan;
+       std::cout << instr << stop_color << "\n";
+    }
 }
 
 void drawNes(Bus *nes, uint16_t offset)
@@ -65,6 +82,8 @@ void drawNes(Bus *nes, uint16_t offset)
     drawRamRange(nes, offset, 16, 16, "\033[01;31m");
     // Draw CPU Status
     drawCpuStatus(nes);
+    // Draw Current Status
+    drawCurrentStatus(nes, nes->_cpu._program_counter-10, nes->_cpu._program_counter + 10);
     
 }
 
@@ -75,7 +94,34 @@ int main(int argc, const char** argv)
     char input = 0;
     uint16_t offset = 0x6000;
 
+    std::stringstream program_object_code;
+
+    program_object_code << "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA";
+	uint16_t nOffset = offset;
+	while (!program_object_code.eof())
+	{
+		std::string b;
+		program_object_code >> b;
+		nes._ram[nOffset++] = (uint8_t)std::stoul(b, nullptr, 16);
+	}
+
+    // The program counter will start at offset. So we have to indicate in the ram at 0xFFFE and 0xFFFF how offset splited
+    // Because when a BRK happens, the program counter is reset to the value located at these places
+    nes._cpu._program_counter = offset;
+
+    // low byte
+    nes._ram[0xFFFE] = (offset  & 0xFF);
+    // high byte
+    nes._ram[0xFFFF] = offset >> 8;
+
+    // we do the same for reset
+        // low byte
+    nes._ram[0xFFFC] = (offset  & 0xFF);
+    // high byte
+    nes._ram[0xFFFD] = offset >> 8;
+
     while (1) {
+        drawNes(&nes, offset);
         input = std::getchar();
         std::cout  << input <<std::endl;
         if (input == 'q')
@@ -84,10 +130,11 @@ int main(int argc, const char** argv)
             nes._cpu.reset();
         } else {
             nes._cpu.clock();
+            while (!nes._cpu.complete())
+                nes._cpu.clock();
         }
-        drawNes(&nes, offset);
-        nes._ram[10] += 1;
-        nes._ram[0X6020] += 1;
+ //       nes._ram[10] += 1;
+//        nes._ram[0X6020] += 1;
     }
     std::cout << "SaA" << std::endl;
     return 0;
