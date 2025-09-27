@@ -31,6 +31,13 @@ VIZ_CPU_RAM_CONS_OBJ	=	$(VIZ_CPU_RAM_CONS_SRC:.cpp=.o)
 VIZ_CPU_RAM_CONS_BIN_NAME	=	cpu_and_ram_console_mode_visualizer
 
 
+VIZ_CPU_RAM_NCURSES_SRC	=	$(shell find ./tools/cpu_and_ram_ncurses_visualizer -name '*.cpp')
+
+VIZ_CPU_RAM_NCURSES_OBJ	=	$(VIZ_CPU_RAM_NCURSES_SRC:.cpp=.o)
+
+VIZ_CPU_RAM_NCURSES_BIN_NAME	=	cpu_and_ram_ncurses_visualizer
+
+
 COMPILATION_FLAGS = -Wall -Wextra -Werror
 
 VAL_FLAG1	=	--track-origins=yes
@@ -43,7 +50,7 @@ VAL_FLAG4	=	--track-fds=yes
 
 VAL_FLAGS	=	$(VAL_FLAGS1) $(VAL_FLAGS2)
 
-LIB_FLAGS	=	-lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17
+LIB_FLAGS	=	-lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17 -lncurses
 
 EXEC	=	 a.out
 
@@ -69,6 +76,12 @@ viz_cpu_ram_cons:	$(VIZ_CPU_RAM_CONS_OBJ)	$(OBJ)
 	g++ -g3 -o $(VIZ_CPU_RAM_CONS_BIN_NAME) $(VIZ_CPU_RAM_CONS_OBJ) $(OBJ) $(LIB_FLAGS)
 	@echo -e "\e[00;00m"
 
+
+viz_cpu_ram_ncurses:	$(VIZ_CPU_RAM_NCURSES_OBJ)	$(OBJ)
+	@echo -e "\e[05;01;34m=====COMPILING NCURSES EXECUTABLE =====\e[00;01;34m"
+	g++ -g3 -o $(VIZ_CPU_RAM_NCURSES_BIN_NAME) $(VIZ_CPU_RAM_NCURSES_OBJ) $(OBJ) $(LIB_FLAGS)
+	@echo -e "\e[00;00m"
+
 test_run:	$(UNIT_SRC)
 		gcc -o unit_test $(UNIT_SRC) --coverage -lcriterion
 		./unit_test
@@ -85,6 +98,7 @@ clean:
 	rm -f $(MAIN_NES_FILE_OBJ)
 	rm -f $(VIZ_CPU_RAM_X11_OBJ)
 	rm -f $(VIZ_CPU_RAM_CONS_OBJ)
+	rm -f $(VIZ_CPU_RAM_NCURSES_OBJ)
 
 
 fclean:	clean
@@ -92,5 +106,6 @@ fclean:	clean
 	rm -f $(EXEC)
 	rm -f $(VIZ_CPU_RAM_X11_BIN_NAME)
 	rm -f $(VIZ_CPU_RAM_CONS_BIN_NAME)
+	rm -f $(VIZ_CPU_RAM_NCURSES_BIN_NAME)
 
 re: fclean all
