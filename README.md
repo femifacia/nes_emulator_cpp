@@ -20,6 +20,18 @@ The goal is to build a foundation for retro consoles (such as the Nintendo Enter
 * Unit-testable core architecture
 * **Visualization Tools** for **Ram** and **CPU** components in **ncurses**,**X11**, and **console mode**
 
+# Architecture
+
+This is how component interact
+
+![image]("./images/arch_v1.png")
+
+The CPU uses the BUS interface to read or write to memory addresses.
+
+The RAM class handles the memory array behind the scenes.
+
+In future, the BUS may route reads/writes to ROM, PPU registers, controllers, etc.
+
 
 ## How to compile and run ?
 
