@@ -2,6 +2,19 @@
 
 A nes emulator in C++
 
+# Table of Content
+
+* [Overview](#overview)
+* [Features](#features)
+    * [Visualisation Tools](#visualization-tools)
+        * [RAM and CPU](#ram-and-cpu)
+* [Architecture](#architecture)
+* [Getting Started](#getting-started)
+    * [Prerequisites](#prerequisites)
+    * [Compilation](#how-to-compile-and-run-)
+* [Contribution](#contribution)
+* [Acknowledgements](#acknowledgements)
+
 # Overview
 This project implements the core of a MOS 6502-based system:
 
@@ -35,6 +48,8 @@ There are 03 view modes:
 * X11 (Implemented by [OneLoneCoder](https://github.com/OneLoneCoder))
 ![image](./images/RAM_visualizer_x11_tool.png "X11 view")
 
+You can find how to compile and use them further in the documentation
+
 # Architecture
 
 This is how component interact
@@ -47,6 +62,16 @@ The RAM class handles the memory array behind the scenes.
 
 In future, the BUS may route reads/writes to ROM, PPU registers, controllers, etc.
 
+# Getting Started
+
+This project is only available on **Linux distros** and **MacOS**
+
+## Prerequisites
+
+* GCC (C++17 Compaitble)
+* Make
+* X11 *Optionnal, juste for CPU Visualization*
+* Ncurses *Optionnal, juste for CPU Visualization*
 
 ## How to compile and run ?
 
@@ -65,7 +90,37 @@ Go at the root of the directory and type:
 
     make viz_cpu_ram_x11
 
-It will compile the viz binary
+It will compile the visualisation binary
+
+To exec it, at the root of the directory type:
+
+    ./cpu_and_ram_x11_visualizer
+
+### CPU Ncurses Visualizer
+
+Go at the root of the directory and type:
+
+    make viz_cpu_ram_ncurses
+
+It will compile the visualisation binary
+
+To exec it, at the root of the directory type:
+
+    ./cpu_and_ram_ncurses_visualizer
+
+
+### CPU Console Mode Visualizer
+
+Go at the root of the directory and type:
+
+    make viz_cpu_ram_con
+
+It will compile the visualisation binary
+
+To exec it, at the root of the directory type:
+
+    ./cpu_and_ram_console_mode_visualize
+
 
 # Contribution
 
