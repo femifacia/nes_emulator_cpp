@@ -20,6 +20,21 @@ The goal is to build a foundation for retro consoles (such as the Nintendo Enter
 * Unit-testable core architecture
 * **Visualization Tools** for **Ram** and **CPU** components in **ncurses**,**X11**, and **console mode**
 
+## Visualization Tools
+
+Some Viz tools has been implemented to observe the functioning of some components
+
+### RAM and CPU
+
+You can observe the steps of functioning for the RAM and the CPU with a **program loaded**.
+There are 03 view modes:
+* NCURSES 
+![image](./images//RAM_visualizer_ncurse_tool.png "ncurse view")
+* Console Mode
+![image](./images/RAM_visualizer_console_tool.png "console mode view")
+* X11 (Implemented by [OneLoneCoder](https://github.com/OneLoneCoder))
+![image](./images/RAM_visualizer_x11_tool.png "X11 view")
+
 # Architecture
 
 This is how component interact
