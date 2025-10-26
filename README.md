@@ -24,7 +24,7 @@ The goal is to build a foundation for retro consoles (such as the Nintendo Enter
 
 This is how component interact
 
-![image]("./images/arch_v1.png")
+![image](./images/arch_v1.png "arch v1")
 
 The CPU uses the BUS interface to read or write to memory addresses.
 
