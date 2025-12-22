@@ -54,7 +54,7 @@ You can find how to compile and use them further in the documentation
 
 This is how component interact
 
-![image](./images/arch_v1.png "arch v1")
+![image](./images/arch_v2.png "arch v2")
 
 The CPU uses the BUS interface to read or write to memory addresses.
 

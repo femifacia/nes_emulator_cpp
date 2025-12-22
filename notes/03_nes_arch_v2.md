@@ -21,4 +21,15 @@ The PPU does not has the same addressable range addresse than the CPU. Its is mu
 
 ## The program ROM (cartridge)
 
-The program is store on the cartridge. The Program ROM is adressed via the CPU BUS and is adress range is from **0x4020** to **0xFFFF**, the entire second half range of the CPU Bus
+The program is store on the cartridge. The Program ROM is adressed via the CPU BUS and is adress range is from **0x4020** to **0xFFFF**, the entire second half range of the CPU Bus. The cartridge, does not simply contain the **program**, it also contain all the graphical informations required to render the game. So, the **Pattern table** is aso stocked on the cartridge. Here on our implementation, we will assume for simplicity that the **Nametable** is stocked on the **NES** itself. Technically some of the name table object can be stored in the cartridge
+
+## Mappers
+
+Sometimes the ammount of program data required, exceeds the adressable range of the CPU, so come the **Mapper** system. It allow different bands of the ROM to be connected to the CPU BUS. So when this ranges are requested, they are throught the same range of the program ROM. The **Mapper** can be **written** or **read** while the ROM can only be **read**
+
+
+
+Here is how those components are linked
+
+
+![image](../images/arch_v2.png "arch v2")
