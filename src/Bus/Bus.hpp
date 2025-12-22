@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <cstring>
+#include "../PPU_2C02/PPU_2C02.hpp"
 
 class Bus
 {
@@ -22,12 +23,16 @@ public:
 
 
     /* RAM*/
-    std::array<uint8_t, 64 * 1024> _ram; // 64KB ram
+    std::array<uint8_t, 2048> _cpuRam; // 64KB ram
+
+
+    // the ppu is connected to the cpu bus
+    PPU_2C02 _ppu;
 
     /// @brief Write Data on the bus
     /// @param addr 
     /// @param data 
-    void write(uint16_t addr, uint8_t data);
+    void cpuWrite(uint16_t addr, uint8_t data);
     
 
 
@@ -35,5 +40,5 @@ public:
     /// @param addr 
     /// @param bReadOnly 
     /// @return 
-    uint8_t read(uint16_t addr, bool bReadOnly = false);
+    uint8_t cpuRead(uint16_t addr, bool bReadOnly = false);
 };

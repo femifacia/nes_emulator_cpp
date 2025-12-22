@@ -19,6 +19,10 @@ The PPU has a small RAM attached on it, **The PALETTES** that describe which **c
 
 The PPU does not has the same addressable range addresse than the CPU. Its is much lower.
 
+The PPU contain the graphical informations while the cpu the logical calculs.
+
+Here we will implement the PPU **2C02** created by **Ricoh**
+
 ## The program ROM (cartridge)
 
 The program is store on the cartridge. The Program ROM is adressed via the CPU BUS and is adress range is from **0x4020** to **0xFFFF**, the entire second half range of the CPU Bus. The cartridge, does not simply contain the **program**, it also contain all the graphical informations required to render the game. So, the **Pattern table** is aso stocked on the cartridge. Here on our implementation, we will assume for simplicity that the **Nametable** is stocked on the **NES** itself. Technically some of the name table object can be stored in the cartridge
