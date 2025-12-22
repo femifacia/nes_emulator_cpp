@@ -56,11 +56,11 @@ This is how component interact
 
 ![image](./images/arch_v2.png "arch v2")
 
-The CPU uses the BUS interface to read or write to memory addresses.
+The CPU uses its BUS interface to read or write to memory addresses.
 
 The RAM class handles the memory array behind the scenes.
 
-In future, the BUS may route reads/writes to ROM, PPU registers, controllers, etc.
+The PPU has its own BUS and use it to communicate with the console and the cartridge
 
 # Getting Started
 
