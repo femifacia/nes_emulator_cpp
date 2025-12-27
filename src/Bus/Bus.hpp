@@ -7,10 +7,14 @@
 #include <string>
 #include <cstring>
 #include "../PPU_2C02/PPU_2C02.hpp"
+#include "../Cartridge/Cartridge.hpp"
 
 class Bus
 {
 private: 
+
+    uint32_t _numberSystemClock;
+    std::shared_ptr<Cartridge> _cartridge;
 
 
 
@@ -41,4 +45,17 @@ public:
     /// @param bReadOnly 
     /// @return 
     uint8_t cpuRead(uint16_t addr, bool bReadOnly = false);
+
+
+    /// @brief Load a cartridge into the nes before launching it
+    /// @param cartridge the cartridge to load
+    void insertCartridge(const std::shared_ptr<Cartridge> &cartridge); // here we load the cartridge on the nes before launching the game
+
+    /// @brief reset the internal system
+    void reset(); // the reset button of the nes
+
+    /// @brief count a clock
+    void clock(); // clock system
+
+
 };

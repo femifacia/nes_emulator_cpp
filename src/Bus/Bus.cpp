@@ -1,7 +1,7 @@
 #include "Bus.hpp"
 
 
-Bus::Bus(/* args */)
+Bus::Bus(/* args */):_numberSystemClock(0)
 {
     std::memset(_cpuRam.data(), 0, _cpuRam.size() * sizeof(decltype(_cpuRam)::value_type));
 //    for (auto &i : _ram)
@@ -47,4 +47,22 @@ uint8_t Bus::cpuRead(uint16_t addr, bool bReadOnly)
     }
     return data;
 
+}
+
+
+void Bus::reset()
+{
+    _cpu.reset();
+    _numberSystemClock = 0;
+}
+
+void Bus::clock()
+{
+
+}
+
+void Bus::insertCartridge(const std::shared_ptr<Cartridge> &cartridge)
+{
+    this->_cartridge = cartridge;
+    _ppu.ConnectCartridge(cartridge);
 }
