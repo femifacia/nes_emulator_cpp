@@ -24,18 +24,27 @@ void Bus::cpuWrite(uint16_t addr, uint8_t data)
     // The ram only store the information at the adresse inputed
     // The ram take the full BUS so the requested addr had to be positive and lower than 0XFFFF
 
-    if (addr >= 0X0000 && addr <=  0xFFFF) {
-        _cpuRam[addr] = data;
+    if (addr >= 0X0000 && addr <=  0x1FFF) {
+        // we are applying mirroring principle
+        _cpuRam[addr & 0x07FF] = data;
+//        _cpuRam[addr % 2048] = data;
+    } else if (addr >= 0x2000 && addr <= 0x3FFF) {
+        _ppu.cpuWrite(addr & 0x0007, data);
     }
 }
 
 
 uint8_t Bus::cpuRead(uint16_t addr, bool bReadOnly)
 {
+    uint8_t data = 0x00;
 
-    if (addr >= 0X0000 && addr <=  0xFFFF) {
-        return _cpuRam[addr];
+    if (addr >= 0X0000 && addr <=  0x1FFF) {
+        // we are applying mirroring principle
+        data = _cpuRam[addr & 0x07FF];
+//        data = _cpuRam[addr % 2048];
+    } else if (addr >= 0x2000 && addr <= 0x3FFF) {
+        data = _ppu.cpuRead(addr & 0x0007, bReadOnly);
     }
-    return 0x00;
+    return data;
 
 }
