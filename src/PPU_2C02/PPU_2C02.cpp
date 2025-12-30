@@ -66,6 +66,10 @@ uint8_t PPU_2C02::ppuRead(uint16_t addr, bool readOnly=false)
     uint8_t data = 0x00;
 
     addr &= 0x3FFF; // the ppu has a VRAM of 16KB on its own bus. So its gos from 0 to 0x3FFF then mirroring
+
+    if (_cartridge->ppuRead(addr, data)){
+
+    }
     return data;
 }
 
@@ -74,6 +78,11 @@ void  PPU_2C02::ppuWrite(uint16_t addr, uint8_t data)
 {
     addr &= 0x3FFF; // the ppu has a VRAM of 16KB on its own bus. So its gos from 0 to 0x3FFF then mirroring
 
+
+
+    if (_cartridge->ppuRead(addr, data)){
+        
+    }
 }
 
 
